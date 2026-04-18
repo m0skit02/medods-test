@@ -2,4 +2,4 @@ package recurringtask
 
 import "errors"
 
-var ErrInvalidRecurrence = errors.New("invalid recurrence")
+var ErrNotFound = errors.New("recurring task not found")

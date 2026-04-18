@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Task Service API",
-    "version": "1.0.0",
-    "description": "CRUD API for tasks built with clean architecture."
+    "title": "API сервиса задач",
+    "version": "1.1.0",
+    "description": "CRUD API для обычных задач и шаблонов периодических задач."
   },
   "servers": [
     {
@@ -13,17 +13,21 @@
   "tags": [
     {
       "name": "Tasks",
-      "description": "Operations with tasks"
+      "description": "Операции с обычными задачами"
+    },
+    {
+      "name": "Recurring Tasks",
+      "description": "Операции с шаблонами периодических задач и генерацией задач"
     }
   ],
   "paths": {
     "/api/v1/tasks": {
       "get": {
         "tags": ["Tasks"],
-        "summary": "List tasks",
+        "summary": "Получить список задач",
         "responses": {
           "200": {
-            "description": "Task list",
+            "description": "Список задач",
             "content": {
               "application/json": {
                 "schema": {
@@ -37,7 +41,7 @@
       },
       "post": {
         "tags": ["Tasks"],
-        "summary": "Create task",
+        "summary": "Создать задачу",
         "requestBody": {
           "required": true,
           "content": {
@@ -48,7 +52,7 @@
         },
         "responses": {
           "201": {
-            "description": "Created task",
+            "description": "Созданная задача",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Task" }
@@ -62,7 +66,7 @@
     "/api/v1/tasks/{id}": {
       "get": {
         "tags": ["Tasks"],
-        "summary": "Get task by ID",
+        "summary": "Получить задачу по ID",
         "parameters": [
           {
             "name": "id",
@@ -73,7 +77,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Task",
+            "description": "Задача",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Task" }
@@ -85,7 +89,7 @@
       },
       "put": {
         "tags": ["Tasks"],
-        "summary": "Update task",
+        "summary": "Обновить задачу",
         "parameters": [
           {
             "name": "id",
@@ -104,7 +108,7 @@
         },
         "responses": {
           "200": {
-            "description": "Updated task",
+            "description": "Обновленная задача",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Task" }
@@ -117,7 +121,7 @@
       },
       "delete": {
         "tags": ["Tasks"],
-        "summary": "Delete task",
+        "summary": "Удалить задачу",
         "parameters": [
           {
             "name": "id",
@@ -127,7 +131,220 @@
           }
         ],
         "responses": {
-          "204": { "description": "Deleted" },
+          "204": { "description": "Удалено" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/api/v1/recurring-tasks": {
+      "get": {
+        "tags": ["Recurring Tasks"],
+        "summary": "Получить список шаблонов периодических задач",
+        "responses": {
+          "200": {
+            "description": "Список шаблонов периодических задач",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/RecurringTask" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Recurring Tasks"],
+        "summary": "Создать шаблон периодической задачи",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RecurringTaskMutationRequest" },
+              "examples": {
+                "everyNDays": {
+                  "summary": "Каждые 2 дня",
+                  "value": {
+                    "title": "Обзвон пациентов",
+                    "description": "Повторяющаяся задача каждые 2 дня",
+                    "active": true,
+                    "recurrence": {
+                      "type": "every_n_days",
+                      "start_date": "2026-04-16T00:00:00Z",
+                      "end_date": "2026-04-22T00:00:00Z",
+                      "interval_days": 2
+                    }
+                  }
+                },
+                "monthlyDay": {
+                  "summary": "Ежемесячно 15 числа",
+                  "value": {
+                    "title": "Инвентаризация",
+                    "description": "Ежемесячная инвентаризация",
+                    "active": true,
+                    "recurrence": {
+                      "type": "monthly_day",
+                      "end_date": "2026-06-30T00:00:00Z",
+                      "day_of_month": 15
+                    }
+                  }
+                },
+                "specificDates": {
+                  "summary": "Конкретные даты",
+                  "value": {
+                    "title": "Подготовить отчет",
+                    "description": "Задача только на выбранные даты",
+                    "active": true,
+                    "recurrence": {
+                      "type": "specific_dates",
+                      "dates": [
+                        "2026-04-20T00:00:00Z",
+                        "2026-05-20T00:00:00Z"
+                      ]
+                    }
+                  }
+                },
+                "oddDays": {
+                  "summary": "Нечетные дни",
+                  "value": {
+                    "title": "Обход пациентов",
+                    "description": "Обход по нечетным дням месяца",
+                    "active": true,
+                    "recurrence": {
+                      "type": "odd_days"
+                    }
+                  }
+                },
+                "endlessDaily": {
+                  "summary": "Ежедневная уборка без даты окончания",
+                  "value": {
+                    "title": "Уборка кабинета",
+                    "description": "Ежедневная уборка кабинета без даты окончания",
+                    "active": true,
+                    "recurrence": {
+                      "type": "every_n_days",
+                      "start_date": "2026-04-18T00:00:00Z",
+                      "interval_days": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Созданный шаблон периодической задачи",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RecurringTask" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/api/v1/recurring-tasks/generate": {
+      "post": {
+        "tags": ["Recurring Tasks"],
+        "summary": "Ручная генерация задач для бессрочных шаблонов",
+        "description": "Используется для бессрочных периодических задач без end_date, например для шаблона 'Уборка кабинета каждый день'.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/GenerateRecurringTasksRequest" },
+              "example": {
+                "from_date": "2026-04-16T00:00:00Z",
+                "to_date": "2026-04-22T00:00:00Z"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Сгенерированные задачи",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GenerateRecurringTasksResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/api/v1/recurring-tasks/{id}": {
+      "get": {
+        "tags": ["Recurring Tasks"],
+        "summary": "Получить шаблон периодической задачи по ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64", "minimum": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Шаблон периодической задачи",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RecurringTask" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "tags": ["Recurring Tasks"],
+        "summary": "Обновить шаблон периодической задачи",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64", "minimum": 1 }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RecurringTaskMutationRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Обновленный шаблон периодической задачи",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RecurringTask" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Recurring Tasks"],
+        "summary": "Удалить шаблон периодической задачи",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64", "minimum": 1 }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Удалено" },
           "404": { "$ref": "#/components/responses/NotFound" }
         }
       }
@@ -136,7 +353,7 @@
   "components": {
     "responses": {
       "BadRequest": {
-        "description": "Bad request",
+        "description": "Некорректный запрос",
         "content": {
           "application/json": {
             "schema": { "$ref": "#/components/schemas/Error" }
@@ -144,7 +361,7 @@
         }
       },
       "NotFound": {
-        "description": "Resource not found",
+        "description": "Ресурс не найден",
         "content": {
           "application/json": {
             "schema": { "$ref": "#/components/schemas/Error" }
@@ -159,11 +376,16 @@
         "properties": {
           "title": {
             "type": "string",
-            "example": "Prepare release"
+            "example": "Подготовить релиз"
           },
           "description": {
             "type": "string",
-            "example": "Collect release notes and check migrations"
+            "example": "Собрать заметки к релизу и проверить миграции"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-04-18T00:00:00Z"
           },
           "status": {
             "type": "string",
@@ -178,11 +400,16 @@
         "properties": {
           "title": {
             "type": "string",
-            "example": "Prepare release"
+            "example": "Подготовить релиз"
           },
           "description": {
             "type": "string",
-            "example": "Collect release notes and check migrations"
+            "example": "Собрать заметки к релизу и проверить миграции"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-04-18T00:00:00Z"
           },
           "status": {
             "type": "string",
@@ -195,15 +422,20 @@
         "type": "object",
         "properties": {
           "id": { "type": "integer", "format": "int64", "example": 1 },
-          "title": { "type": "string", "example": "Prepare release" },
+          "title": { "type": "string", "example": "Подготовить релиз" },
           "description": {
             "type": "string",
-            "example": "Collect release notes and check migrations"
+            "example": "Собрать заметки к релизу и проверить миграции"
           },
           "status": {
             "type": "string",
             "enum": ["new", "in_progress", "done"],
             "example": "new"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-04-18T00:00:00Z"
           },
           "created_at": {
             "type": "string",
@@ -214,6 +446,135 @@
             "type": "string",
             "format": "date-time",
             "example": "2026-03-24T00:00:00Z"
+          }
+        }
+      },
+      "RecurringRecurrence": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["every_n_days", "monthly_day", "specific_dates", "even_days", "odd_days"],
+            "example": "every_n_days"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-04-16T00:00:00Z"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-04-22T00:00:00Z"
+          },
+          "interval_days": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 2
+          },
+          "day_of_month": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30,
+            "example": 15
+          },
+          "dates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        }
+      },
+      "RecurringTaskMutationRequest": {
+        "type": "object",
+        "required": ["title", "recurrence"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Обзвон пациентов"
+          },
+          "description": {
+            "type": "string",
+            "example": "Периодическая задача для обзвона"
+          },
+          "active": {
+            "type": "boolean",
+            "example": true
+          },
+          "recurrence": {
+            "$ref": "#/components/schemas/RecurringRecurrence"
+          }
+        }
+      },
+      "RecurringTask": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64", "example": 1 },
+          "title": { "type": "string", "example": "Обзвон пациентов" },
+          "description": {
+            "type": "string",
+            "example": "Периодическая задача для обзвона"
+          },
+          "active": {
+            "type": "boolean",
+            "example": true
+          },
+          "recurrence": {
+            "$ref": "#/components/schemas/RecurringRecurrence"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-04-16T10:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-04-16T10:00:00Z"
+          }
+        }
+      },
+      "GenerateRecurringTasksRequest": {
+        "type": "object",
+        "required": ["from_date", "to_date"],
+        "properties": {
+          "from_date": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-04-16T00:00:00Z"
+          },
+          "to_date": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-04-22T00:00:00Z"
+          }
+        }
+      },
+      "GenerateRecurringTasksResponse": {
+        "type": "object",
+        "properties": {
+          "from_date": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-04-16T00:00:00Z"
+          },
+          "to_date": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-04-22T00:00:00Z"
+          },
+          "generated_count": {
+            "type": "integer",
+            "example": 2
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Task"
+            }
           }
         }
       },
